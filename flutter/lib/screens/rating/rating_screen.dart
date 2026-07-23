@@ -10,6 +10,7 @@ class RatingScreen extends StatefulWidget {
 class _RatingScreenState extends State<RatingScreen> {
   /// mood: 0 = BAD, 1 = middle (NOT BAD), 2 = GOOD
   double mood = 2.0;
+  String _note = '';
 
   String get label {
     if (mood < 2 / 3) return 'BAD';
@@ -152,12 +153,28 @@ class _RatingScreenState extends State<RatingScreen> {
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                child: _SoftButton(
-                  label: 'Submit',
-                  fg: _submitFgFor(mood),
-                  bg: _submitBgFor(mood),
-                  onTap: () => _submitRating(),
-                  trailing: const Icon(Icons.arrow_forward_rounded, size: 18),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SoftButton(
+                        label: 'Add Note',
+                        fg: uiFg,
+                        bg: uiFg.withOpacity(0.1),
+                        onTap: () => _showAddNoteDialog(),
+                        trailing: const Icon(Icons.edit_note_rounded, size: 18),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SoftButton(
+                        label: 'Submit',
+                        fg: _submitFgFor(mood),
+                        bg: _submitBgFor(mood),
+                        onTap: () => _submitRating(),
+                        trailing: const Icon(Icons.arrow_forward_rounded, size: 18),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -173,11 +190,63 @@ class _RatingScreenState extends State<RatingScreen> {
   Color _submitFgFor(double v) =>
       _submitBgFor(v).computeLuminance() > 0.5 ? Colors.black : Colors.white;
 
+  void _showAddNoteDialog() {
+    final uiFg = _uiFgFor(mood);
+    final bg = _bgFor(mood);
+    final controller = TextEditingController(text: _note);
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: bg,
+          title: Text(
+            'Add a Note',
+            style: TextStyle(color: uiFg),
+          ),
+          content: TextField(
+            controller: controller,
+            style: TextStyle(color: uiFg),
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Enter your comment here...',
+              hintStyle: TextStyle(color: uiFg.withOpacity(0.5)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: uiFg.withOpacity(0.3)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: uiFg),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: TextStyle(color: uiFg.withOpacity(0.7))),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _note = controller.text;
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Save', style: TextStyle(color: uiFg, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _submitRating() async {
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Thank you for your rating! '),
+        content: Text(
+          'Thank you for your rating! ',
+          style: TextStyle(color: _uiFgFor(mood)),
+        ),
         backgroundColor: _bgFor(mood),
         behavior: SnackBarBehavior.floating,
       ),
